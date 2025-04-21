@@ -10,17 +10,17 @@ var builder = WebApplication.CreateBuilder(args);
 // Ensure Paths.DATABASE is properly formatted
 var connectionStringBuilder1 = new SqliteConnectionStringBuilder
 {
-    //DataSource = Paths.DATABASEDB1
-    DataSource = Paths.DatabasePathForDocker
+    DataSource = Paths.DATABASEDB1
+    //DataSource = Paths.DatabasePathForDocker
 };
 
-var conntectionStringBuilder2 = new SqliteConnectionStringBuilder
-{
-    DataSource = Paths.DATABASEDB2
-};
+//var conntectionStringBuilder2 = new SqliteConnectionStringBuilder
+//{
+//    DataSource = Paths.DATABASEDB2
+//};
 
 string connectionString1 = connectionStringBuilder1.ConnectionString;
-string conntectionString2 = conntectionStringBuilder2.ConnectionString;
+//string conntectionString2 = conntectionStringBuilder2.ConnectionString;
 // Add services to the container.
 
 builder.Services.AddControllers();
@@ -32,8 +32,8 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Services.AddDbContext<SearchDb1Context>(options =>
     options.UseSqlite(connectionString1));
-builder.Services.AddDbContext<SearchDb2Context>(options =>
-    options.UseSqlite(conntectionString2));
+//builder.Services.AddDbContext<SearchDb2Context>(options =>
+    //options.UseSqlite(conntectionString2));
 builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddCors(options =>
 {

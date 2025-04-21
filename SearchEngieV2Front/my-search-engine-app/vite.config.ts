@@ -6,7 +6,7 @@ export default defineConfig({
   server: {
     proxy: {
       "/api/": {
-        target: "https://localhost:7122",  // Should be changed to load balancer later
+        target: "https://localhost:5001",  // Should be changed to load balancer later
         changeOrigin: true,
         secure: false, // Disable SSL certificate verification for local dev
         //rewrite: (path) => path.replace(/^\/api\/LoadBalancer/, "/api/LoadBalancer"), // Keep the path as is

@@ -1,6 +1,6 @@
 import { useState } from "react";
 import SearchBar from "./Search/SearchBar";
-import SearchResults from "./Search/SearchResult"; // ✅ Correct import
+import SearchResults from "./Search/SearchResult"; 
 import { Box, Typography } from "@mui/material";
 import axios from "axios";
 

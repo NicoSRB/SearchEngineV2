@@ -16,9 +16,9 @@ namespace Shared
 
         public static string DATABASEDB2 = @"/Users\brolo\Desktop\it-arkitektur\Semester-6\Arkitektur-principper\SearchEngineV2\Data\Baughman.db";
     
-        public static string  DatabasePathForDocker = "/data/db.db";
+        public static string  DatabasePathForDocker = "/Data/db.db";
 
-        public static string FolderForDockerDB1 = "/data/seData/medium";
+        public static string FolderForDockerDB1 = "/Data/seData/medium";
 
         public static string GetDatabase(int id)
         {

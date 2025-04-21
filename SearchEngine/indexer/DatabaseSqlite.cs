@@ -16,7 +16,8 @@ namespace Indexer
 
             connectionStringBuilder.Mode = SqliteOpenMode.ReadWriteCreate;
 
-            connectionStringBuilder.DataSource = Paths.DATABASEDB2;
+            connectionStringBuilder.DataSource = Paths.DATABASE;
+            //connectionStringBuilder.DataSource = Paths.DatabasePathForDocker;
 
 
             _connection = new SqliteConnection(connectionStringBuilder.ConnectionString);
