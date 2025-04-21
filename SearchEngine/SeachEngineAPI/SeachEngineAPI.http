@@ -1,0 +1,6 @@
+@SeachEngineAPI_HostAddress = http://localhost:5267
+
+GET {{SeachEngineAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
