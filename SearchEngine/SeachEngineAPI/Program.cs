@@ -35,6 +35,7 @@ builder.Services.AddDbContext<SearchDb1Context>(options =>
 //builder.Services.AddDbContext<SearchDb2Context>(options =>
     //options.UseSqlite(conntectionString2));
 builder.Services.AddScoped<ISearchService, SearchService>();
+builder.Services.AddScoped<ITermnetClient, TermnetClient>();
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp",
@@ -52,9 +53,9 @@ builder.Services.AddCors(options =>
     });
 });
 
-builder.WebHost.ConfigureKestrel(options =>
+builder.Services.AddHttpClient<ITermnetClient, TermnetClient>(client =>
 {
-    options.ListenAnyIP(8082); // or 8082, etc.
+    client.BaseAddress = new Uri("http://localhost:5150/"); // Adjust the base address as needed
 });
 
 var app = builder.Build();

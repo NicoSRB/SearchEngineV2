@@ -1,0 +1,6 @@
+@TermnetAPI_HostAddress = http://localhost:5150
+
+GET {{TermnetAPI_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
