@@ -9,6 +9,7 @@ namespace Shared.Model
     public class TermnetResponse
     {
         public Dictionary<string, List<SynonymTermer>> ExpandedTerms { get; set; }
+        public List<string> NotExpandedTerms { get; set; } = new();
 
         public TermnetResponse()
         {

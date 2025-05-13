@@ -25,19 +25,20 @@ namespace Shared.Model
         
         public SearchResultQuery() { }
 
+        // The query that was used to search
         [JsonProperty("query")]
-        public string[] Query { get;  }
-
+        public string[] Query { get; set; }
         [JsonProperty("hits")]
-        public int Hits { get; }
-
+        public int Hits { get; set; }
         [JsonProperty("documentHits")]
-        public List<DocumentHit> DocumentHits { get;  }
-
+        public List<DocumentHit> DocumentHits { get; set;  }
         [JsonProperty("ignored")]
-        public List<string> Ignored { get; }
-       
+        public List<string> Ignored { get; set; }
         [JsonProperty("timeUsed")]
-        public TimeSpan TimeUsed { get;  }
+        public TimeSpan TimeUsed { get; set; }
+
+        [JsonProperty("unexpandedTerms")]
+        public List<string> UnexpandedTerms { get; set; } = new();
+
     }
 }

@@ -8,7 +8,7 @@ namespace Shared.Model
 {
     public class QueryProcessor
     {
-        public static string[] ProcessQuery(string query, bool caseSensitive, int maxWords)
+        public static string[] ProcessQuery(string query, bool caseSensitive, int maxWords, string[] domains)
         {
             if (string.IsNullOrWhiteSpace(query))
             {
@@ -26,6 +26,12 @@ namespace Shared.Model
             {
                 queryArray = queryArray.Take(maxWords).ToArray();
             }
+
+            if (domains != null && domains.Length > 0)
+            {
+                queryArray = queryArray.Where(term => domains.Contains(term)).ToArray();
+            }
+
             return queryArray;
         }
     }

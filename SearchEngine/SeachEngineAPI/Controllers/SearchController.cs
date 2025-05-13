@@ -2,7 +2,6 @@
 using SeachEngineAPI.Interfaces;
 using SeachEngineAPI.Factories;
 using SeachEngineAPI.Context;
-using System.Runtime.InteropServices;
 using Shared.Model;
 
 namespace SeachEngineAPI.Controllers
@@ -20,32 +19,33 @@ namespace SeachEngineAPI.Controllers
             _termnetClient = termnetClient;
         }
 
-        [HttpGet("{query}")]
+        [HttpGet("")]
         public async Task<IActionResult> Search(
-            string query, 
-            [FromQuery] int maxAmount, 
-            [FromQuery] bool caseSensitive = true, 
+            [FromQuery] string query, 
+            [FromQuery] int maxAmount = 10, 
+            [FromQuery] bool caseSensitive = false, 
             [FromQuery] bool includeTimeStamps = true,
-            [FromQuery] List<string>? domains = null,
-            [FromQuery] bool expandedWithSynonym = false)
+            [FromQuery] string[]? domains = null
+            )
         {   
             if (string.IsNullOrWhiteSpace(query))
             {
                 return BadRequest("Query cannot be empty.");
             }
 
-            string[] queryArray = QueryProcessor.ProcessQuery(query, caseSensitive, maxAmount);
 
-            if (expandedWithSynonym)
+            string[] queryArray = QueryProcessor.ProcessQuery(query, caseSensitive, maxAmount, domains);
+
+            if (domains != null && domains.Length > 0)
             {
-                // First step: 
-                var expandedTermsMap = await _termnetClient.ExpandQueryAsync(query, domains ?? new List<string>());
+                var expandedTermsMap = await _termnetClient.ExpandQueryAsync(query, domains);
 
-                // Get the expanded terms
-                var expandedTerms = expandedTermsMap
+                var expandedQuery = expandedTermsMap
                     .SelectMany(kvp => kvp.Value.Append(kvp.Key))
                     .Distinct()
                     .ToArray();
+
+                queryArray = expandedQuery;
             }
 
             var results = await _searchService.SearchAsync(queryArray, caseSensitive, maxAmount, includeTimeStamps);
@@ -56,7 +56,14 @@ namespace SeachEngineAPI.Controllers
                 return NotFound("No matches found.");
             }
 
-            return Ok(results);
+            return Ok(new
+            {
+                query = queryArray,  // Expanded query
+                hits = results.Hits,
+                documentHits = results.DocumentHits,
+                ignored = results.Ignored,
+                timeUsed = results.TimeUsed
+            });
         }
     }
 }

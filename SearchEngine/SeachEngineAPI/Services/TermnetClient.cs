@@ -11,8 +11,17 @@ namespace SeachEngineAPI.Services
             _httpClient = httpClient;
         }
 
-        public async Task<Dictionary<string, List<string>>> ExpandQueryAsync(string query, List<string> domains)
+        public async Task<Dictionary<string, List<string>>> ExpandQueryAsync(string query, string[] domains)
         {
+            if (domains == null || domains.Length == 0)
+            {
+                // No domains selected, return just the original query with no synonyms
+                return new Dictionary<string, List<string>>
+        {
+            { query, new List<string>() }
+        };
+            }
+
             var requestBody = new
             {
                 Query = query,
@@ -30,7 +39,6 @@ namespace SeachEngineAPI.Services
                     throw new Exception("Response contains null ExpandedTerms.");
                 }
 
-                // Convert SynonymTermer to List<string>  
                 var convertedTerms = termnetResponse.ExpandedTerms.ToDictionary(
                     kvp => kvp.Key,
                     kvp => kvp.Value.Select(synonym => synonym.Term).ToList()
@@ -38,7 +46,9 @@ namespace SeachEngineAPI.Services
 
                 return convertedTerms;
             }
+
             throw new Exception("Failed to expand query.");
         }
+
     }
 }

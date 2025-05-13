@@ -7,24 +7,43 @@ namespace TermnetAPI.Services
     {
         public Task<List<SynonymTermer>> GetSynonymsAsync(string word, List<string> domainNames)
         {
-            var mockData = new Dictionary<string, List<SynonymTermer>>(StringComparer.OrdinalIgnoreCase)
+            var synonyms = new List<SynonymTermer>();
+
+            foreach (var domain in domainNames)
             {
-                ["Advokat"] = new List<SynonymTermer>
+                if (DomainDictionaries.TryGetValue(domain, out var dictionary))
                 {
-                    new SynonymTermer { Term = "Jurist", Weight = 0.8 },
-                    new SynonymTermer { Term = "Resthjælp", Weight = 0.5 }
-                },
-                ["Hjælp"] = new List<SynonymTermer>
-                {
-                    new SynonymTermer { Term = "Assistance", Weight = 0.7 },
-                    new SynonymTermer { Term = "Bistand", Weight = 0.6 }
+                    if (dictionary.TryGetValue(word, out var domainSynonyms))
+                    {
+                        synonyms.AddRange(domainSynonyms);
+                    }
                 }
-            };
-            if (mockData.TryGetValue(word, out var synonyms))
-            {
-                return Task.FromResult(synonyms);
             }
-            return Task.FromResult(new List<SynonymTermer>());
+
+            return Task.FromResult(synonyms);
         }
+
+
+        private static readonly Dictionary<string, Dictionary<string, List<SynonymTermer>>> DomainDictionaries = new(StringComparer.OrdinalIgnoreCase)
+        {   
+            ["Time"] = new Dictionary<string, List<SynonymTermer>> (StringComparer.OrdinalIgnoreCase)
+            {
+                ["Hour"] = new List<SynonymTermer>
+                    {
+                        new SynonymTermer { Term = "Time", Weight = 0.8 },
+                        new SynonymTermer { Term = "TimeZone", Weight = 0.5 }
+                    }
+            },
+            ["Help"] = new Dictionary<string, List<SynonymTermer>>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["Assistance"] = new List<SynonymTermer>
+                    {
+                        new SynonymTermer { Term = "Something", Weight = 0.7 },
+                        new SynonymTermer { Term = "Bistand", Weight = 0.6 }
+                    }
+            }
+        };
+
     }
  }
+

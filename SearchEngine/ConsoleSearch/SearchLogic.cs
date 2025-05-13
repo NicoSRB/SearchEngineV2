@@ -6,7 +6,7 @@ namespace ConsoleSearch
 {
     public class SearchLogic
     {
-        IDatabase mDatabase;
+        IDatabase mDatabase; 
 
         Dictionary<string, int> mWords;
 
@@ -18,7 +18,7 @@ namespace ConsoleSearch
         /* Perform search of documents containing words from query. The result will
          * contain details about amost maxAmount of documents.
          */
-        public SearchResultQuery Search(String[] query, int maxAmount)
+        public SearchResultQuery Search(string[] query, int maxAmount)
         {
             List<string> ignored;
 

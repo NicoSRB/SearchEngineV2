@@ -2,6 +2,6 @@
 {
     public interface ITermnetClient
     {
-        Task<Dictionary<string, List<string>>> ExpandQueryAsync(string query, List<string> domains);
+        Task<Dictionary<string, List<string>>> ExpandQueryAsync(string query, string[] domains);
     }
 }

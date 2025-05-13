@@ -26,7 +26,6 @@ namespace TermnetAPI.Controllers
             {
                 response.ExpandedTerms[term] = await _termnetService.GetSynonymsAsync(term, request.Domains);
             }
-
             return Ok(response);
         }
     }
