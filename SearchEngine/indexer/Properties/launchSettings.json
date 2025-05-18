@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "indexer": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}

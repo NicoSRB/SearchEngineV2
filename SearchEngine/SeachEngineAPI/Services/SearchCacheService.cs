@@ -1,32 +1,28 @@
 ﻿using Microsoft.OpenApi.Services;
 using Newtonsoft.Json;
+using SeachEngineAPI.Interfaces;
 using StackExchange.Redis;
 
 namespace SeachEngineAPI.Services
 {
-    public class SearchCacheService
+    public class SearchCacheService : ICacheService
     {
-        private readonly IDatabase _cache;
+       
+        private readonly IDatabase _db;
 
         public SearchCacheService(IConnectionMultiplexer redis)
         {
-            _cache = redis.GetDatabase();
+            _db = redis.GetDatabase();
         }
 
-        public async Task<SearchResult?> GetCachedResultAsync(string key)
+        public async Task<string?> GetCachedResultAsync(string key)
         {
-            var cached = await _cache.StringGetAsync(key);
-            if (cached.IsNullOrEmpty) return null;
-
-            // Convert RedisValue to string before deserialization
-            return JsonConvert.DeserializeObject<SearchResult>(cached.ToString());
+            return await _db.StringGetAsync(key);
         }
 
-        public async Task SetCachedResultAsync(string key, SearchResult result, TimeSpan expiration)
+        public async Task SetCachedResultAsync(string key, string? result, TimeSpan expiration)
         {
-            // Serialize using Newtonsoft.Json
-            var json = JsonConvert.SerializeObject(result);
-            await _cache.StringSetAsync(key, json, expiration);
+            await _db.StringSetAsync(key, result, expiration);
         }
     }
 }
