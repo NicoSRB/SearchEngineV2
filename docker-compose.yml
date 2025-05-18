@@ -47,14 +47,17 @@ services:
     build:
       context: ./SearchEngine/
       dockerfile: Indexer/Dockerfile
+    command: ["dotnet", "indexer.dll"]
     volumes:
       - ./Data:/app/data
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
-      - DB_MODE=Postgres
+      - POSTGRES_CONNECTION_STRING=Host=postgres;Username=postgres;Password=password;Database=indexerdb
+      - MONGO_CONNECTION_STRING=mongodb://root:password@mongodb:27017
     depends_on:
       - postgres
       - mongo
+    networks:
+      - postgres-db-network
 
   redis:
     image: redis:7-alpine
@@ -93,6 +96,7 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=password
+      - POSTGRES_DB=indexerdb
     ports:
       - "5432:5432"
     volumes:

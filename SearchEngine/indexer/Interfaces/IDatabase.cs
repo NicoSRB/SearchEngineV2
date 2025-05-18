@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using Shared.Model;
 
-namespace Indexer
+namespace indexer.Interfaces
 {
     public interface IDatabase
     {
