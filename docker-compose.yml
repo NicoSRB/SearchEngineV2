@@ -13,6 +13,8 @@ services:
       - ASPNETCORE_ENVIRONMENT=Development
       - DB_PATH=
       - Redis_CONNECTION=redis
+      - POSTGRES_CONNECTION_STRING=Host=postgres;Username=postgres;Password=password;Database=indexerdb
+      - MONGO_CONNECTION_STRING=mongodb://root:password@mongodb:27017
     depends_on:
       - redis
 

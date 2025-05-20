@@ -15,10 +15,11 @@ namespace indexer.Databases
         private readonly IMongoDatabase _database;
         public DatabaseMongo()
         {
-            var mongoClientSettings = MongoClientSettings.FromConnectionString("mongodb://localhost:27017");
+            var mongoClientSettings = MongoClientSettings.FromConnectionString("mongodb://root:password@localhost:27017");
             var client = new MongoClient(mongoClientSettings);
 
-            var database = client.GetDatabase("db");
+            _database = client.GetDatabase("indexerdb"); // assign to the field!
+            Console.WriteLine("MongoDB connected");
         }
 
         public void InsertDocument(BEDocument doc)
@@ -31,10 +32,10 @@ namespace indexer.Databases
         {
             var collection = _database.GetCollection<BsonDocument>("words");
             var doc = new BsonDocument
-                {
-                    { "id", id },
-                    { "name", value }
-                };
+            {
+                { "id", id },
+                { "name", value }
+            };
             collection.InsertOne(doc);
         }
 
@@ -44,16 +45,38 @@ namespace indexer.Databases
             var docs = res.Select(kv => new BsonDocument { { "id", kv.Value }, { "name", kv.Key } });
             collection.InsertMany(docs);
         }
+
         public void InsertAllOcc(int docId, ISet<int> wordIds)
         {
             var collection = _database.GetCollection<BsonDocument>("occurrences");
-            var docs = wordIds.Select(wordId => new BsonDocument {
-            { "docId", docId }, { "wordId", wordId }
-        });
+            var docs = wordIds.Select(wordId => new BsonDocument
+            {
+                { "docId", docId },
+                { "wordId", wordId }
+            });
             collection.InsertMany(docs);
         }
 
-        public Dictionary<string, int> GetAllWords() => throw new NotImplementedException();
-        public int GetDocumentCounts() => throw new NotImplementedException();
+        public Dictionary<string, int> GetAllWords()
+        {
+            var collection = _database.GetCollection<BsonDocument>("words");
+            var words = collection.Find(FilterDefinition<BsonDocument>.Empty).ToList();
+            var dict = new Dictionary<string, int>();
+
+            foreach (var wordDoc in words)
+            {
+                if (wordDoc.TryGetValue("name", out var nameBson) && wordDoc.TryGetValue("id", out var idBson))
+                {
+                    dict[nameBson.AsString] = idBson.AsInt32;
+                }
+            }
+            return dict;
+        }
+
+        public int GetDocumentCounts()
+        {
+            var collection = _database.GetCollection<BEDocument>("documents");
+            return (int)collection.CountDocuments(FilterDefinition<BEDocument>.Empty);
+        }
     }
 }

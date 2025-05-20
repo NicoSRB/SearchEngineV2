@@ -8,11 +8,8 @@ namespace Indexer
     {
         static void Main(string[] args)
         {
-            
-            new App().Run("postgres");
-            new App().Run("mongo");
 
-            //new Renamer().Crawl(new DirectoryInfo(@"/Users/ole/data"));
+            new App().RunAll(new[] { "postgres", "mongo" });
 
 
         }

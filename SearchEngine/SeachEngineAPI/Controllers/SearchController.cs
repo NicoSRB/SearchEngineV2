@@ -1,10 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SeachEngineAPI.Interfaces;
-using SeachEngineAPI.Factories;
-using SeachEngineAPI.Context;
-using Shared.Model;
-using System.Diagnostics.Metrics;
-using Microsoft.OpenApi.Services;
 using System.Text.Json;
 
 namespace SeachEngineAPI.Controllers
@@ -15,20 +10,23 @@ namespace SeachEngineAPI.Controllers
     {
         private readonly ISearchService _searchService;
         private readonly ITermnetClient _termnetClient;
-        
         private readonly ICacheService _cacheService;
-        private readonly Counter<int> _cacheHits;
-        private readonly Counter<int> _cacheMisses;
 
-        public SearchController(SearchDb1Context dbContext, ITermnetClient termnetClient, ICacheService casheService, Meter meter)
+       // private readonly Counter<int> _cacheHits;
+       // private readonly Counter<int> _cacheMisses;
+
+        public SearchController(ISearchService searchService,ITermnetClient termnetClient /*ICacheService cacheService, IMeterFactory meterFactory*/)
         {
-            _searchService = SearchServiceFactory.Create(dbContext);
+            _searchService = searchService;
             _termnetClient = termnetClient;
-            _cacheService = casheService;
+            //_cacheService = cacheService;
 
-            _cacheHits = meter.CreateCounter<int>("Search_Cashe_Hits");
-            _cacheMisses = meter.CreateCounter<int>("Search_Cashe_Misses");
+            //var meter = meterFactory.Create("SearchEngineAPI");
+
+            //_cacheHits = meter.CreateCounter<int>("Search_Cache_Hits");
+            //_cacheMisses = meter.CreateCounter<int>("Search_Cache_Misses");
         }
+
 
         [HttpGet("")]
         public async Task<IActionResult> Search(
@@ -44,15 +42,15 @@ namespace SeachEngineAPI.Controllers
             }
 
             string cacheKey = $"search:{query.ToLower()}:{string.Join(",", domains ?? [])}:{caseSensitive}:{maxAmount}";
-            string? cached = await _cacheService.GetCachedResultAsync(cacheKey);
+            //string? cached = await _cacheService.GetCachedResultAsync(cacheKey);
 
-            if (cached != null)
-            {
-                _cacheHits.Add(1);
-                return Content(cached, "application/json");
-            }
+            //if (cached != null)
+            //{
+            //    _cacheHits.Add(1);
+            //    return Content(cached, "application/json");
+            //}
 
-            _cacheMisses.Add(1);
+            //_cacheMisses.Add(1);
 
             string[] queryArray;
 
@@ -85,7 +83,7 @@ namespace SeachEngineAPI.Controllers
                 timeUsed = results.TimeUsed
             };
 
-            await _cacheService.SetCachedResultAsync(cacheKey, JsonSerializer.Serialize(response), TimeSpan.FromMinutes(10));
+            //await _cacheService.SetCachedResultAsync(cacheKey, JsonSerializer.Serialize(response), TimeSpan.FromMinutes(10));
 
             return Ok(response);
         }
