@@ -7,12 +7,16 @@ using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using System.Diagnostics.Metrics;
 using NLog;
+using SeachEngineAPI.Context;
+using SeachEngineAPI.Repositories;
+using Shared;
 
 var logger = NLog.LogManager.Setup().LoadConfigurationFromFile().GetCurrentClassLogger();
 logger.Info("Starting Test");
 
 var builder = WebApplication.CreateBuilder(args);
 var postgresConnectionString = builder.Configuration.GetConnectionString("Postgres");
+var mongoConnectionString = builder.Configuration.GetConnectionString("Mongo"); 
 
 builder.Services.AddDbContext<postgreDbContext>(options =>
     options.UseNpgsql(postgresConnectionString)
@@ -27,6 +31,20 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddDbContext<postgreDbContext>(options =>
     options.UseNpgsql(postgresConnectionString)
 );
+string backend = builder.Configuration["Backend"] ?? "postgres";
+
+if (backend == "postgres")
+{
+    builder.Services.AddScoped<ISearchRepository, PostgresSearchRepository>();
+    builder.Services.AddDbContext<postgreDbContext>(options =>
+    options.UseNpgsql(postgresConnectionString));
+}
+else if (backend == "mongo")
+{
+    builder.Services.AddScoped<ISearchRepository, MongoSearchRepository>();
+    builder.Services.Configure<MongoSettings>(builder.Configuration.GetSection("MongoSettings"));
+    builder.Services.AddSingleton<MongoDbContext>();
+}
 
 builder.Services.AddStackExchangeRedisCache(options =>
 {
