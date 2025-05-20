@@ -3,17 +3,16 @@ using Microsoft.Data.Sqlite;
 using Npgsql;
 using Shared;
 using Shared.Model;
-using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace indexer.Databases
 {
     public class DatabasePostgres : IDatabase
     {
         private readonly NpgsqlConnection _connection;
+
+
+        // This is bad, needs to be moved to a config file / env variable 
         public DatabasePostgres()
         {
             var connectionStringBuilder = new NpgsqlConnectionStringBuilder
