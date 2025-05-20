@@ -1,22 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using indexer.Databases;
+using indexer.Interfaces;
 using Shared;
 
 namespace Indexer
 {
     public class App
     {
-        public void Run(){
-            DatabaseSqlite db = new DatabaseSqlite();
-            Crawler crawler = new Crawler(db);
+        public void Run(string backend){
+            IDatabase db = backend switch
+            {
+                "sqlite" => new DatabaseSqlite(),
+                "postgres" => new DatabasePostgres(),
+                "mongo" => new DatabaseMongo(),
+                _ => throw new ArgumentException("Unsupported backend: " + backend)
+            };
 
+
+            Crawler crawler = new Crawler(db);
             var root = new DirectoryInfo(Paths.FOLDERDB2);
 
+            crawler.IndexFilesIn(root, new List<string> { ".txt" });
+
+
             DateTime start = DateTime.Now;
-
-            crawler.IndexFilesIn(root, new List<string> { ".txt"});        
-
             TimeSpan used = DateTime.Now - start;
             Console.WriteLine("DONE! used " + used.TotalMilliseconds);
 

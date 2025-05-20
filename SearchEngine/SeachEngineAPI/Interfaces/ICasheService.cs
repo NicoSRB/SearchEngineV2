@@ -1,9 +1,11 @@
-﻿
+﻿using Shared.Model;
+
+
 namespace SeachEngineAPI.Interfaces
 {
-    //public interface ICasheService
-    //{
-    //    Task<SearchResultQuery> GetCachedResultAsync(string key);
-    //    Task SetCachedResultAsync(string key, SearchResult result, TimeSpan expiration);
-    //}
+    public interface ICacheService
+    {
+        Task<string?> GetCachedResultAsync(string key);
+        Task SetCachedResultAsync(string key, string? result, TimeSpan expiration);
+    }
 }

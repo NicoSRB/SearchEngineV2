@@ -1,8 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using indexer.Databases;
 using Shared.Model;
-
+using indexer.Interfaces;
 namespace Indexer
 {
     public class Crawler
@@ -20,7 +21,10 @@ namespace Indexer
 
         IDatabase mdatabase;
 
+        public DatabaseSqlite Db { get; }
+
         public Crawler(IDatabase db){ mdatabase = db; }
+
 
         //Return a dictionary containing all words (as the key)in the file
         // [f] and the value is the number of occurrences of the key in file.

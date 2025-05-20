@@ -3,8 +3,9 @@ using System.Collections.Generic;
 using Shared.Model;
 using Shared;
 using Microsoft.Data.Sqlite;
+using indexer.Interfaces;
 
-namespace Indexer
+namespace indexer.Databases
 {
     public class DatabaseSqlite : IDatabase
     {
@@ -74,7 +75,8 @@ namespace Indexer
             }
         }
 
-        public void InsertAllOcc(int docId, ISet<int> wordIds){
+        public void InsertAllOcc(int docId, ISet<int> wordIds)
+        {
             using (var transaction = _connection.BeginTransaction())
             {
                 var command = _connection.CreateCommand();
@@ -103,7 +105,8 @@ namespace Indexer
             }
         }
 
-        public void InsertWord(int id, string value){
+        public void InsertWord(int id, string value)
+        {
             var insertCmd = new SqliteCommand("INSERT INTO word(id, name) VALUES(@id,@name)");
             insertCmd.Connection = _connection;
 
@@ -116,7 +119,8 @@ namespace Indexer
             insertCmd.ExecuteNonQuery();
         }
 
-        public void InsertDocument(BEDocument doc){
+        public void InsertDocument(BEDocument doc)
+        {
             var insertCmd = new SqliteCommand("INSERT INTO document(id, url, idxTime, creationTime) VALUES(@id,@url, @idxTime, @creationTime)");
             insertCmd.Connection = _connection;
 
@@ -156,12 +160,15 @@ namespace Indexer
             return res;
         }
 
-        public int GetDocumentCounts() {
+        public int GetDocumentCounts()
+        {
             var selectCmd = _connection.CreateCommand();
             selectCmd.CommandText = "SELECT count(*) FROM document";
 
-            using (var reader = selectCmd.ExecuteReader()) {
-                if (reader.Read()) {
+            using (var reader = selectCmd.ExecuteReader())
+            {
+                if (reader.Read())
+                {
                     var count = reader.GetInt32(0);
                     return count;
                 }

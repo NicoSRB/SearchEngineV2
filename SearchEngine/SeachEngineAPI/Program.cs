@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Data.Sqlite;
 using SeachEngineAPI.Interfaces;
 using SeachEngineAPI.Services;
+using StackExchange.Redis;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,10 +33,24 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddControllers();
 builder.Services.AddDbContext<SearchDb1Context>(options =>
     options.UseSqlite(connectionString1));
+
+builder.Services.AddStackExchangeRedisCache(options =>
+{
+    options.Configuration = "localhost:6379"; // Adjust the Redis server address as needed
+    options.InstanceName = "SampleInstance";
+});
+builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
+{
+    var configuration = ConfigurationOptions.Parse("redis:6379", true);
+    return ConnectionMultiplexer.Connect(configuration);
+});
+
 //builder.Services.AddDbContext<SearchDb2Context>(options =>
-    //options.UseSqlite(conntectionString2));
+//options.UseSqlite(conntectionString2));
 builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddScoped<ITermnetClient, TermnetClient>();
+builder.Services.AddScoped<ICacheService, SearchCacheService>();
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowReactApp",
