@@ -1,6 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Options;
+using Shared.Model;
 using System;
 using System.Collections.Generic;
+using System.Text.Json;
 
 namespace LoadBalancerAPI.Controllers
 {
@@ -8,58 +11,77 @@ namespace LoadBalancerAPI.Controllers
     [ApiController]
     public class LoadBalancerController : ControllerBase
     {
-        private static List<string> backendServers = new List<string>
+        private readonly IHttpClientFactory _httpClientFactory;
+        private readonly List<string> _backendServers;
+        private static int _currentServerIndex = 0;
+        private readonly ILogger<LoadBalancerController> _logger;
+
+
+
+        public LoadBalancerController(
+            IHttpClientFactory httpClientFactory,
+            IOptions<LoadBalancerConfig> config, 
+            ILogger<LoadBalancerController> logger)
         {
-            "http://localhost:5267", // Example backend server 1
-            "http://localhost:5268", // Example backend server 2
-        };
+            _httpClientFactory = httpClientFactory;
+            _backendServers = config.Value.BackendServers;
+            _logger = logger;
+        }
 
-        private static int currentServerIndex = 0;
-
-        // Round-robin load balancing method
-        private static string GetNextServer()
+        private string GetNextServer()
         {
-            // stay within the bounds of available servers
-            var server = backendServers[currentServerIndex];
-
-            // Move to the next server, wrapping around if necessary
-            currentServerIndex = (currentServerIndex + 1) % backendServers.Count;
-
+            var server = _backendServers[_currentServerIndex];
+            _currentServerIndex = (_currentServerIndex + 1) % _backendServers.Count;
             return server;
         }
 
-        // Forward request to backend server and perform a redirect
-        [HttpGet("search/{query}/{maxAmount}")]
-        public async Task<IActionResult> ForwardRequest(string query, int maxAmount)
+        [HttpGet("search")]
+        public async Task<IActionResult> ForwardRequest(
+            [FromQuery] string query,
+            [FromQuery] int maxAmount = 10,
+            [FromQuery] bool caseSensitive = false,
+            [FromQuery] bool includeTimeStamps = true,
+            [FromQuery] string[]? domains = null)
         {
-            // Get the next backend server using round-robin
             var server = GetNextServer();
 
-            // Construct the URL to forward the request to the backend server
-            var forwardUrl = $"{server}/api/search/{query}/{maxAmount}";
+            var queryParams = new List<string>
+        {
+                $"query={Uri.EscapeDataString(query)}",
+                $"maxAmount={maxAmount}",
+                $"caseSensitive={caseSensitive}",
+                $"includeTimeStamps={includeTimeStamps}"
+        };
 
-            using (var client = new HttpClient())
+            if (domains != null && domains.Any())
             {
-                try
-                {
-                    // Make HTTP GET request to the backend server
-                    var response = await client.GetAsync(forwardUrl);
+                foreach (var domain in domains)
+                    queryParams.Add($"domains={Uri.EscapeDataString(domain)}");
+            }
 
-                    if (response.IsSuccessStatusCode)
-                    {
-                        var content = await response.Content.ReadAsStringAsync();
-                        return Ok(content);
-                    }
-                    else
-                    {
-                        // If the request fails, return the status code of the backend response
-                        return StatusCode((int)response.StatusCode, "Error in backend service.");
-                    }
-                }
-                catch (HttpRequestException ex)
+            var forwardUrl = $"{server}/api/search?" + string.Join("&", queryParams);
+            _logger.LogInformation($"Forwarding request to: {server}");
+            _logger.LogInformation($"Forwarding URL: {forwardUrl}");
+            _logger.LogInformation($"Query: {query}, MaxAmount: {maxAmount}");
+
+            try
+            {
+                var client = _httpClientFactory.CreateClient();
+                var response = await client.GetAsync(forwardUrl);
+
+                if (response.IsSuccessStatusCode)
                 {
-                    return StatusCode(500, $"Error forwarding the request: {ex.Message}");
+                    var content = await response.Content.ReadAsStringAsync();
+                    var jsonDoc = JsonDocument.Parse(content);
+                    return Ok(jsonDoc.RootElement);
                 }
+
+                return StatusCode((int)response.StatusCode, "Backend error.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Failed to forward request");
+                return StatusCode(500, $"Forwarding failed: {ex.Message}");
             }
         }
     }
