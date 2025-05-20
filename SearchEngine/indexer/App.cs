@@ -41,5 +41,13 @@ namespace Indexer
                 if (count == 0) break;
             }
         }
+        public void RunAll(IEnumerable<string> backends)
+        {
+            foreach (var backend in backends)
+            {
+                Console.WriteLine($"Starting indexing with backend: {backend}");
+                Run(backend);
+            }
+        }
     }
 }

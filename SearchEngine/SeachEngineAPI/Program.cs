@@ -1,55 +1,60 @@
-using SeachEngineAPI.Context;
-using Shared;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Data.Sqlite;
 using SeachEngineAPI.Interfaces;
 using SeachEngineAPI.Services;
 using StackExchange.Redis;
+using SeachEngineAPI.DbContexts;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using System.Diagnostics.Metrics;
+using NLog;
+
+var logger = NLog.LogManager.Setup().LoadConfigurationFromFile().GetCurrentClassLogger();
+logger.Info("Starting Test");
 
 var builder = WebApplication.CreateBuilder(args);
+var postgresConnectionString = builder.Configuration.GetConnectionString("Postgres");
 
-// Ensure Paths.DATABASE is properly formatted
-var connectionStringBuilder1 = new SqliteConnectionStringBuilder
-{
-    DataSource = Paths.DATABASEDB1
-    //DataSource = Paths.DatabasePathForDocker
-};
-
-//var conntectionStringBuilder2 = new SqliteConnectionStringBuilder
-//{
-//    DataSource = Paths.DATABASEDB2
-//};
-
-string connectionString1 = connectionStringBuilder1.ConnectionString;
-//string conntectionString2 = conntectionStringBuilder2.ConnectionString;
+builder.Services.AddDbContext<postgreDbContext>(options =>
+    options.UseNpgsql(postgresConnectionString)
+);
 // Add services to the container.
 
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Add Controllers and DbContext
-builder.Services.AddControllers();
-builder.Services.AddDbContext<SearchDb1Context>(options =>
-    options.UseSqlite(connectionString1));
+builder.Services.AddDbContext<postgreDbContext>(options =>
+    options.UseNpgsql(postgresConnectionString)
+);
 
 builder.Services.AddStackExchangeRedisCache(options =>
 {
-    options.Configuration = "localhost:6379"; // Adjust the Redis server address as needed
+    options.Configuration = "localhost:6379";
     options.InstanceName = "SampleInstance";
 });
+
 builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
 {
-    var configuration = ConfigurationOptions.Parse("redis:6379", true);
-    return ConnectionMultiplexer.Connect(configuration);
+    var config = ConfigurationOptions.Parse("localhost:6379", true);
+    config.AbortOnConnectFail = false; // prevents crashing on startup if Redis is slow
+    return ConnectionMultiplexer.Connect(config);
 });
 
-//builder.Services.AddDbContext<SearchDb2Context>(options =>
-//options.UseSqlite(conntectionString2));
+//// Add OpenTele
+//builder.Services.AddOpenTelemetry()
+//    .WithMetrics(metrics =>
+//    {
+//        metrics
+//            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("SearchEngineAPI"))
+//            .AddMeter("SearchEngineAPI") // <-- name used in your controller
+//            .AddAspNetCoreInstrumentation();
+//    });
+
 builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddScoped<ITermnetClient, TermnetClient>();
 builder.Services.AddScoped<ICacheService, SearchCacheService>();
+builder.Services.AddScoped<ISearchRepository, PostgresSearchRepository>();
 
 builder.Services.AddCors(options =>
 {
@@ -81,13 +86,6 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
-
-//using (var scope = app.Services.CreateScope())
-//{
-//    var dbContext = scope.ServiceProvider.GetRequiredService<SearchDbContext>();
-//    dbContext.Database.EnsureCreated();
-//}
-
 
 app.UseCors("AllowAllOrigins");
 app.UseCors("AllowReactApp");
