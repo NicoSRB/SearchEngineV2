@@ -40,5 +40,7 @@ namespace Shared.Model
         [JsonProperty("unexpandedTerms")]
         public List<string> UnexpandedTerms { get; set; } = new();
 
+        public string DbType { get; set; }
+
     }
 }
