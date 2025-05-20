@@ -1,9 +1,20 @@
+using Shared.Model;
+using NLog;
+
+var logger = NLog.LogManager.Setup().LoadConfigurationFromFile("nlog.config").GetCurrentClassLogger();
+
+
+try {
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
 builder.Services.AddControllers();
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
+builder.Services.Configure<LoadBalancerConfig>(
+    builder.Configuration.GetSection("LoadBalancer"));
+builder.Services.AddHttpClient();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddCors(options =>
@@ -30,3 +41,12 @@ app.UseAuthorization();
 app.MapControllers();
 
 app.Run();
+}
+catch (Exception ex)
+{
+    logger.Error(ex, "Application stopped because of exception");
+}
+finally
+{
+    NLog.LogManager.Shutdown();
+}

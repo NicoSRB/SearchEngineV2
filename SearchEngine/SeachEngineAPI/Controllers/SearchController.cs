@@ -74,13 +74,15 @@ namespace SeachEngineAPI.Controllers
                 return NotFound("No matches found.");
             }
 
+
             var response = new
             {
                 query = queryArray,
                 hits = results.Hits,
                 documentHits = results.DocumentHits,
                 ignored = results.Ignored,
-                timeUsed = results.TimeUsed
+                timeUsed = results.TimeUsed,
+                dbType = results.DbType,
             };
 
             //await _cacheService.SetCachedResultAsync(cacheKey, JsonSerializer.Serialize(response), TimeSpan.FromMinutes(10));
