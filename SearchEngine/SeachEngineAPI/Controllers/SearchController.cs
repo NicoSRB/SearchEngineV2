@@ -1,6 +1,10 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using SeachEngineAPI.Interfaces;
 using System.Text.Json;
+using Shared;
+using System.Diagnostics;
+using OpenTelemetry.Metrics;
+using System.Diagnostics.Metrics;
 
 namespace SeachEngineAPI.Controllers
 {
@@ -12,16 +16,22 @@ namespace SeachEngineAPI.Controllers
         private readonly ITermnetClient _termnetClient;
         private readonly ICacheService _cacheService;
 
-       // private readonly Counter<int> _cacheHits;
-       // private readonly Counter<int> _cacheMisses;
+        // Metrics
+        private readonly SearchMetrics _metrics;
+        private readonly Stopwatch _timer = new ();
 
-        public SearchController(ISearchService searchService,ITermnetClient termnetClient /*ICacheService cacheService, IMeterFactory meterFactory*/)
+        // private readonly Counter<int> _cacheHits;
+        // private readonly Counter<int> _cacheMisses;
+
+        public SearchController(ISearchService searchService,ITermnetClient termnetClient, SearchMetrics metrics, /*ICacheService cacheService,*/ IMeterFactory meterFactory)
         {
             _searchService = searchService;
             _termnetClient = termnetClient;
+            _metrics = metrics;
+
             //_cacheService = cacheService;
 
-            //var meter = meterFactory.Create("SearchEngineAPI");
+            var meter = meterFactory.Create("SearchEngineAPI");
 
             //_cacheHits = meter.CreateCounter<int>("Search_Cache_Hits");
             //_cacheMisses = meter.CreateCounter<int>("Search_Cache_Misses");
@@ -41,16 +51,22 @@ namespace SeachEngineAPI.Controllers
                 return BadRequest("Query cannot be empty.");
             }
 
-            string cacheKey = $"search:{query.ToLower()}:{string.Join(",", domains ?? [])}:{caseSensitive}:{maxAmount}";
-            //string? cached = await _cacheService.GetCachedResultAsync(cacheKey);
+            _timer.Restart();
 
-            //if (cached != null)
+            string cacheKey = $"search:{query.ToLower()}:{string.Join(",", domains ?? [])}:{caseSensitive}:{maxAmount}";
+
+            //string? cached = await _cacheService.GetCachedResultAsync(cacheKey);
+            bool cacheHit = false;
+            //bool cacheHit = TryGetFromCache(query, out var result);
+            //if (cacheHit)m
             //{
-            //    _cacheHits.Add(1);
-            //    return Content(cached, "application/json");
+            //    _metrics.CacheHits.Add(1);
+            //    _timer.Stop();
+            //    _metrics.QueryDuration.Record(_timer.Elapsed.TotalMilliseconds);
+            //    return Ok(result);
             //}
 
-            //_cacheMisses.Add(1);
+            _metrics.CacheMisses.Add(1);
 
             string[] queryArray;
 
@@ -74,6 +90,9 @@ namespace SeachEngineAPI.Controllers
                 return NotFound("No matches found.");
             }
 
+            _timer.Stop();
+            _metrics.QueryDuration.Record(_timer.Elapsed.TotalMilliseconds);
+
 
             var response = new
             {
@@ -84,6 +103,9 @@ namespace SeachEngineAPI.Controllers
                 timeUsed = results.TimeUsed,
                 dbType = results.DbType,
             };
+
+            var backend = response.dbType;
+            _metrics.BackendUsed.Add(1, new KeyValuePair<string, object?>("backend", backend));
 
             //await _cacheService.SetCachedResultAsync(cacheKey, JsonSerializer.Serialize(response), TimeSpan.FromMinutes(10));
 

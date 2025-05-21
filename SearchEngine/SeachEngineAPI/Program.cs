@@ -3,13 +3,12 @@ using SeachEngineAPI.Interfaces;
 using SeachEngineAPI.Services;
 using StackExchange.Redis;
 using SeachEngineAPI.DbContexts;
-using OpenTelemetry.Metrics;
-using OpenTelemetry.Resources;
-using System.Diagnostics.Metrics;
 using NLog;
-using SeachEngineAPI.Context;
 using SeachEngineAPI.Repositories;
 using Shared;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Metrics;
+using System.Diagnostics.Metrics;
 
 var logger = NLog.LogManager.Setup().LoadConfigurationFromFile().GetCurrentClassLogger();
 logger.Info("Starting Test");
@@ -59,20 +58,12 @@ builder.Services.AddSingleton<IConnectionMultiplexer>(sp =>
     return ConnectionMultiplexer.Connect(config);
 });
 
-//// Add OpenTele
-//builder.Services.AddOpenTelemetry()
-//    .WithMetrics(metrics =>
-//    {
-//        metrics
-//            .SetResourceBuilder(ResourceBuilder.CreateDefault().AddService("SearchEngineAPI"))
-//            .AddMeter("SearchEngineAPI") // <-- name used in your controller
-//            .AddAspNetCoreInstrumentation();
-//    });
-
+builder.Services.AddSingleton<SearchMetrics>();
 builder.Services.AddScoped<ISearchService, SearchService>();
 builder.Services.AddScoped<ITermnetClient, TermnetClient>();
 builder.Services.AddScoped<ICacheService, SearchCacheService>();
 builder.Services.AddScoped<ISearchRepository, PostgresSearchRepository>();
+
 
 builder.Services.AddCors(options =>
 {
@@ -96,7 +87,36 @@ builder.Services.AddHttpClient<ITermnetClient, TermnetClient>(client =>
     client.BaseAddress = new Uri("http://localhost:5150/"); // Adjust the base address as needed
 });
 
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.ListenAnyIP(8082); // Replace with correct port
+});
+
+//// Add OpenTele  
+builder.Services.AddOpenTelemetry()
+    .ConfigureResource(resource => resource.AddService("SearchEngineAPI"))
+    .WithMetrics(metrics =>
+    {
+        metrics
+            .AddMeter("SearchEngineAPI") // Required to export custom metrics
+            .AddAspNetCoreInstrumentation()
+            .AddRuntimeInstrumentation()
+            .AddPrometheusExporter();
+    });
+
 var app = builder.Build();
+
+// Middleware for Prometheus metrics
+app.UseRouting();
+// Middleware to collect HTTP metrics
+
+app.UseRouting();
+app.UseAuthorization();
+app.UseEndpoints(endpoints =>
+{
+    endpoints.MapControllers();
+    endpoints.MapPrometheusScrapingEndpoint();
+});
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -108,6 +128,5 @@ if (app.Environment.IsDevelopment())
 app.UseCors("AllowAllOrigins");
 app.UseCors("AllowReactApp");
 app.UseHttpsRedirection();
-app.UseAuthorization();
 app.MapControllers();
 app.Run();

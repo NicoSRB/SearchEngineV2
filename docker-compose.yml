@@ -11,7 +11,7 @@ services:
       - ./Data:/app/data
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
-      - DB_PATH=
+      - ASPNETCORE_URLS=http://+:8082
       - Redis_CONNECTION=redis
       - POSTGRES_CONNECTION_STRING=Host=postgres;Username=postgres;Password=password;Database=indexerdb
       - MONGO_CONNECTION_STRING=mongodb://root:password@mongodb:27017
@@ -44,6 +44,7 @@ services:
       - "5003:8083"
     environment:
       - ASPNETCORE_ENVIRONMENT=Development
+      - ASPNETCORE_URLS=http://+:8083
 
   indexer:
     build:
