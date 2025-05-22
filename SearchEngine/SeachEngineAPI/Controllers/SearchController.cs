@@ -5,6 +5,7 @@ using Shared;
 using System.Diagnostics;
 using OpenTelemetry.Metrics;
 using System.Diagnostics.Metrics;
+using Shared.Model;
 
 namespace SeachEngineAPI.Controllers
 {
@@ -20,22 +21,20 @@ namespace SeachEngineAPI.Controllers
         private readonly SearchMetrics _metrics;
         private readonly Stopwatch _timer = new ();
 
-        // private readonly Counter<int> _cacheHits;
-        // private readonly Counter<int> _cacheMisses;
+        private readonly Counter<int> _cacheHits;
+        private readonly Counter<int> _cacheMisses;
 
-        public SearchController(ISearchService searchService,ITermnetClient termnetClient, SearchMetrics metrics, /*ICacheService cacheService,*/ IMeterFactory meterFactory)
+        public SearchController(ISearchService searchService,ITermnetClient termnetClient, ICacheService cacheService, SearchMetrics metrics, Meter meter)
         {
             _searchService = searchService;
             _termnetClient = termnetClient;
             _metrics = metrics;
+            _cacheService = cacheService; 
 
-            //_cacheService = cacheService;
-
-            var meter = meterFactory.Create("SearchEngineAPI");
-
-            //_cacheHits = meter.CreateCounter<int>("Search_Cache_Hits");
-            //_cacheMisses = meter.CreateCounter<int>("Search_Cache_Misses");
+            _cacheHits = meter.CreateCounter<int>("Search_Cache_Hits");
+            _cacheMisses = meter.CreateCounter<int>("Search_Cache_Misses");
         }
+
 
 
         [HttpGet("")]
@@ -55,24 +54,29 @@ namespace SeachEngineAPI.Controllers
 
             string cacheKey = $"search:{query.ToLower()}:{string.Join(",", domains ?? [])}:{caseSensitive}:{maxAmount}";
 
-            //string? cached = await _cacheService.GetCachedResultAsync(cacheKey);
-            bool cacheHit = false;
-            //bool cacheHit = TryGetFromCache(query, out var result);
-            //if (cacheHit)m
-            //{
-            //    _metrics.CacheHits.Add(1);
-            //    _timer.Stop();
-            //    _metrics.QueryDuration.Record(_timer.Elapsed.TotalMilliseconds);
-            //    return Ok(result);
-            //}
+            var cachedJson = await _cacheService.GetCachedResultAsync(cacheKey);
+            if (!string.IsNullOrEmpty(cachedJson))
+            {
+                Console.WriteLine("Cache hit: " + cacheKey);
+                _cacheHits.Add(1);
+                _metrics.CacheHits.Add(1);
+                _timer.Stop();
+                _metrics.QueryDuration.Record(_timer.Elapsed.TotalMilliseconds);
+
+                var cachedResponse = JsonSerializer.Deserialize<SearchResultQuery>(cachedJson);
+                return Ok(cachedResponse);
+            }
 
             _metrics.CacheMisses.Add(1);
+            Console.WriteLine("Cache miss for " + cacheKey);
+            _cacheMisses.Add(1);
 
             string[] queryArray;
 
             if (domains != null && domains.Length > 0)
             {
                 var expandedTermsMap = await _termnetClient.ExpandQueryAsync(query, domains);
+
                 queryArray = expandedTermsMap
                     .SelectMany(kvp => kvp.Value.Append(kvp.Key))
                     .Distinct()
@@ -94,20 +98,21 @@ namespace SeachEngineAPI.Controllers
             _metrics.QueryDuration.Record(_timer.Elapsed.TotalMilliseconds);
 
 
-            var response = new
+            var response = new SearchResultQuery
             {
-                query = queryArray,
-                hits = results.Hits,
-                documentHits = results.DocumentHits,
-                ignored = results.Ignored,
-                timeUsed = results.TimeUsed,
-                dbType = results.DbType,
+                Query = queryArray,
+                Hits = results.Hits,
+                DocumentHits = results.DocumentHits,
+                Ignored = results.Ignored,
+                TimeUsed = results.TimeUsed,
+                DbType = results.DbType
             };
 
-            var backend = response.dbType;
+            var backend = response.DbType;
             _metrics.BackendUsed.Add(1, new KeyValuePair<string, object?>("backend", backend));
 
-            //await _cacheService.SetCachedResultAsync(cacheKey, JsonSerializer.Serialize(response), TimeSpan.FromMinutes(10));
+
+            await _cacheService.SetCachedResultAsync(cacheKey, JsonSerializer.Serialize(response), TimeSpan.FromMinutes(10));
 
             return Ok(response);
         }

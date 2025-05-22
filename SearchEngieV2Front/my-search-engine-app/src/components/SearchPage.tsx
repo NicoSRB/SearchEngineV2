@@ -4,7 +4,6 @@ import SearchResults from "./Search/SearchResult";
 import { Box, Typography } from "@mui/material";
 import axios from "axios";
 
-// ✅ Define your result item structure
 interface SearchResultItem {
   query: string[];
   hits: number;

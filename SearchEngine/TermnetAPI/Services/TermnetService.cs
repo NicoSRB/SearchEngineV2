@@ -20,7 +20,10 @@ namespace TermnetAPI.Services
                 }
             }
 
-            return Task.FromResult(synonyms);
+            return Task.FromResult(synonyms
+                .OrderByDescending(s => s.Weight)
+                .Take(2) // Limit to top 10 synonyms
+                .ToList());
         }
 
 
@@ -30,8 +33,9 @@ namespace TermnetAPI.Services
             {
                 ["Hour"] = new List<SynonymTermer>
                     {
-                        new SynonymTermer { Term = "Time", Weight = 0.8 },
-                        new SynonymTermer { Term = "TimeZone", Weight = 0.5 }
+                        new SynonymTermer { Term = "Time", Weight = 0.2 },
+                        new SynonymTermer { Term = "TimeZone", Weight = 0.8 },
+                        new SynonymTermer { Term = "Country", Weight = 0.2 }
                     }
             },
             ["Help"] = new Dictionary<string, List<SynonymTermer>>(StringComparer.OrdinalIgnoreCase)

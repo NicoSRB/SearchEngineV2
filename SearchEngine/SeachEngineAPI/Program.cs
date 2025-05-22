@@ -27,18 +27,15 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Add Controllers and DbContext
-builder.Services.AddDbContext<postgreDbContext>(options =>
-    options.UseNpgsql(postgresConnectionString)
-);
-string backend = builder.Configuration["Backend"] ?? "postgres";
+string backend = builder.Configuration["Backend"] ?? "Postgres";
 
-if (backend == "postgres")
+if (backend == "Postgres")
 {
     builder.Services.AddScoped<ISearchRepository, PostgresSearchRepository>();
     builder.Services.AddDbContext<postgreDbContext>(options =>
     options.UseNpgsql(postgresConnectionString));
 }
-else if (backend == "mongo")
+else if (backend == "Mongo")
 {
     builder.Services.AddScoped<ISearchRepository, MongoSearchRepository>();
     builder.Services.Configure<MongoSettings>(builder.Configuration.GetSection("MongoSettings"));
@@ -67,13 +64,6 @@ builder.Services.AddScoped<ISearchRepository, PostgresSearchRepository>();
 
 builder.Services.AddCors(options =>
 {
-    options.AddPolicy("AllowReactApp",
-        policy => policy.WithOrigins("http://localhost:5173")
-                        .AllowAnyMethod()
-                        .AllowAnyHeader());
-});
-builder.Services.AddCors(options =>
-{
     options.AddPolicy("AllowAllOrigins", builder =>
     {
         builder.AllowAnyOrigin()  // Allow any origin
@@ -87,36 +77,42 @@ builder.Services.AddHttpClient<ITermnetClient, TermnetClient>(client =>
     client.BaseAddress = new Uri("http://localhost:5150/"); // Adjust the base address as needed
 });
 
-builder.WebHost.ConfigureKestrel(serverOptions =>
-{
-    serverOptions.ListenAnyIP(8082); // Replace with correct port
-});
-
-//// Add OpenTele  
 builder.Services.AddOpenTelemetry()
-    .ConfigureResource(resource => resource.AddService("SearchEngineAPI"))
+    .WithMetrics(builder =>
+    {
+        builder
+            .AddAspNetCoreInstrumentation()
+            .AddMeter("SearchEngineAPI")
+            .AddPrometheusExporter(); 
+    });
+builder.Services.AddSingleton(sp => new Meter("SearchEngineAPI"));
+
+builder.Services.AddOpenTelemetry()
     .WithMetrics(metrics =>
     {
-        metrics
-            .AddMeter("SearchEngineAPI") // Required to export custom metrics
-            .AddAspNetCoreInstrumentation()
-            .AddRuntimeInstrumentation()
-            .AddPrometheusExporter();
+        metrics.AddPrometheusExporter();
+        metrics.AddMeter("Microsoft.AspNetCore.Hosting");
+        metrics.AddMeter("Microsoft.AspNetCore.Server.Kestrel");
+        metrics.AddView("http.server.request.duration",
+            new ExplicitBucketHistogramConfiguration
+            {
+                Boundaries = new double[]
+                {
+                    0, 0.005, 0.01, 0.025, 0.05,
+                    0.075, 0.1, 0.25, 0.5, 0.75,
+                    1, 2.5, 5, 7.5, 10
+                }
+            });
     });
 
 var app = builder.Build();
 
-// Middleware for Prometheus metrics
 app.UseRouting();
-// Middleware to collect HTTP metrics
 
 app.UseRouting();
 app.UseAuthorization();
-app.UseEndpoints(endpoints =>
-{
-    endpoints.MapControllers();
-    endpoints.MapPrometheusScrapingEndpoint();
-});
+app.MapControllers();
+app.UseOpenTelemetryPrometheusScrapingEndpoint();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
