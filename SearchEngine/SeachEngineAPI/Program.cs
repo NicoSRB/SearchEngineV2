@@ -39,9 +39,9 @@ else if (backend == "Mongo")
 {
     builder.Services.AddScoped<ISearchRepository, MongoSearchRepository>();
     builder.Services.Configure<MongoSettings>(builder.Configuration.GetSection("MongoSettings"));
-    builder.Services.AddSingleton<MongoDbContext>();
+    builder.Services.AddSingleton<IMongoDbContext, MongoDbContext>();
 }
-
+    
 builder.Services.AddStackExchangeRedisCache(options =>
 {
     options.Configuration = "localhost:6379";
