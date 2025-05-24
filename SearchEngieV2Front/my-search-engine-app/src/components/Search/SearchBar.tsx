@@ -23,7 +23,7 @@ interface SearchBarProps {
   loading: boolean;
 }
 
-const termNets = ["Time", "Help"];
+const termNets = ["Time", "Help", "Technology"];
 
 const SearchBar: React.FC<SearchBarProps> = ({ onSearch, loading }) => {
   const [query, setQuery] = useState<string>("");
