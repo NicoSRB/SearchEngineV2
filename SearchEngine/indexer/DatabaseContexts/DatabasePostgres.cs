@@ -3,6 +3,7 @@ using Microsoft.Data.Sqlite;
 using Npgsql;
 using Shared;
 using Shared.Model;
+using System;
 using System.Collections.Generic;
 
 namespace indexer.Databases
@@ -17,11 +18,11 @@ namespace indexer.Databases
         {
             var connectionStringBuilder = new NpgsqlConnectionStringBuilder
             {
-                Host = "localhost",
-                Port = 5432,
-                Database = "indexerdb",
-                Username = "postgres",
-                Password = "password"
+                Host = Environment.GetEnvironmentVariable("DB_HOST") ?? "localhost",
+                Port = int.Parse(Environment.GetEnvironmentVariable("DB_PORT") ?? "5432"),
+                Database = Environment.GetEnvironmentVariable("DB_NAME") ?? "indexerdb",
+                Username = Environment.GetEnvironmentVariable("DB_USER") ?? "postgres",
+                Password = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "password"
             };
 
             _connection = new NpgsqlConnection(connectionStringBuilder.ConnectionString);

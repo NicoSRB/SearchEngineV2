@@ -15,6 +15,8 @@ namespace indexer.Databases
         private readonly IMongoDatabase _database;
         public DatabaseMongo()
         {
+            var mongoConnectionString = Environment.GetEnvironmentVariable("MONGO_CONNECTION_STRING") ?? "mongodb://root:password@localhost:27017";
+
             var mongoClientSettings = MongoClientSettings.FromConnectionString("mongodb://root:password@localhost:27017");
             var client = new MongoClient(mongoClientSettings);
 

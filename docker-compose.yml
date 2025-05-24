@@ -56,6 +56,11 @@ services:
     environment:
       - POSTGRES_CONNECTION_STRING=Host=postgres;Username=postgres;Password=password;Database=indexerdb
       - MONGO_CONNECTION_STRING=mongodb://root:password@mongodb:27017
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_NAME=indexerdb
+      - DB_USER=postgres
+      - DB_PASSWORD=passsword
     depends_on:
       - postgres
       - mongo
