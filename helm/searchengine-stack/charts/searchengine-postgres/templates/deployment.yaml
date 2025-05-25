@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: searchengine-postgres
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: searchengine-postgres
+  template:
+    metadata:
+      labels:
+        app: searchengine-postgres
+    spec:
+      containers:
+        - name: searchengine-postgres
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 80

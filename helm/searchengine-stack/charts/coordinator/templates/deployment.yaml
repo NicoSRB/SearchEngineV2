@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: search-coordinator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: search-coordinator
+  template:
+    metadata:
+      labels:
+        app: search-coordinator
+    spec:
+      containers:
+        - name: search-coordinator
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - containerPort: 80

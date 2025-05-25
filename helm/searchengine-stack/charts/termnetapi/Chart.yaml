@@ -1,0 +1,4 @@
+apiVersion: v2
+name: termnet-api
+version: 0.1.0
+description: Termnet api, domain expansion

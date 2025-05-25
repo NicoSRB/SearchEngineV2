@@ -1,0 +1,4 @@
+apiVersion: v2
+name: searchengine-mongo
+version: 0.1.0
+description: Search Engine API Mongo

@@ -1,0 +1,7 @@
+image:
+  repository: broloes2/searchengine-mongo
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  port: 80

@@ -1,0 +1,4 @@
+apiVersion: v2
+name: searchengine-postgres
+version: 0.1.0
+description: Search Engine API postgres
