@@ -17,7 +17,7 @@ namespace indexer.Databases
         {
             var mongoConnectionString = Environment.GetEnvironmentVariable("MONGO_CONNECTION_STRING") ?? "mongodb://root:password@localhost:27017";
 
-            var mongoClientSettings = MongoClientSettings.FromConnectionString("mongodb://root:password@localhost:27017");
+            var mongoClientSettings = MongoClientSettings.FromConnectionString(mongoConnectionString);
             var client = new MongoClient(mongoClientSettings);
 
             _database = client.GetDatabase("indexerdb"); // assign to the field!
