@@ -15,12 +15,16 @@ namespace indexer.Databases
         private readonly IMongoDatabase _database;
         public DatabaseMongo()
         {
-            var mongoConnectionString = Environment.GetEnvironmentVariable("MONGO_CONNECTION_STRING") ?? "mongodb://root:password@localhost:27017";
+            var user = Environment.GetEnvironmentVariable("MONGO_USER") ?? "root";
+            var password = Environment.GetEnvironmentVariable("MONGO_PASSWORD") ?? "password";
+            var host = Environment.GetEnvironmentVariable("MONGO_HOST") ?? "localhost";
+            var port = Environment.GetEnvironmentVariable("MONGO_PORT") ?? "27017";
 
+            var mongoConnectionString = $"mongodb://{user}:{password}@{host}:{port}";
             var mongoClientSettings = MongoClientSettings.FromConnectionString(mongoConnectionString);
             var client = new MongoClient(mongoClientSettings);
+            _database = client.GetDatabase("indexerdb");    
 
-            _database = client.GetDatabase("indexerdb"); // assign to the field!
             Console.WriteLine("MongoDB connected");
         }
 
