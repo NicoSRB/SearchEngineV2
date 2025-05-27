@@ -1,3 +1,5 @@
+# See https://aka.ms/customizecontainer to learn how to customize your debug container and how Visual Studio uses this Dockerfile to build your images for faster debugging.
+
 # This stage is used when running from VS in fast mode (Default for Debug configuration)
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 USER $APP_UID
@@ -5,31 +7,25 @@ WORKDIR /app
 EXPOSE 8080
 EXPOSE 8081
 
-# Move curl installation here, run as root first, then switch to your app user
-USER root
-RUN apt-get update && apt-get install -y curl && rm -rf /var/lib/apt/lists/*
-USER $APP_UID
 
 # This stage is used to build the service project
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 ARG BUILD_CONFIGURATION=Release
 WORKDIR /src
-COPY ["LoadBalancerAPI/LoadBalancerAPI.csproj", "LoadBalancerAPI/"]
+COPY ["SearchCoordinator/SearchCoordinator.csproj", "SearchCoordinator/"]
 COPY ["Shared/Shared.csproj", "Shared/"]
-
-RUN dotnet restore "LoadBalancerAPI/LoadBalancerAPI.csproj"
+RUN dotnet restore "./SearchCoordinator/SearchCoordinator.csproj"
 COPY . .
-WORKDIR "/src/LoadBalancerAPI"
-RUN dotnet build "LoadBalancerAPI.csproj" -c $BUILD_CONFIGURATION -o /app/build
+WORKDIR "/src/SearchCoordinator"
+RUN dotnet build "./SearchCoordinator.csproj" -c $BUILD_CONFIGURATION -o /app/build
 
 # This stage is used to publish the service project to be copied to the final stage
 FROM build AS publish
 ARG BUILD_CONFIGURATION=Release
-RUN dotnet publish "LoadBalancerAPI.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
+RUN dotnet publish "./SearchCoordinator.csproj" -c $BUILD_CONFIGURATION -o /app/publish /p:UseAppHost=false
 
 # This stage is used in production or when running from VS in regular mode (Default when not using the Debug configuration)
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-
-ENTRYPOINT ["dotnet", "LoadBalancerAPI.dll"]
+ENTRYPOINT ["dotnet", "SearchCoordinator.dll"]

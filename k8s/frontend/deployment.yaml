@@ -1,0 +1,23 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: searchengine
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+        - name: frontend
+          image: broloes2/searchfrontend:v1
+          ports:
+            - containerPort: 80
+          env:
+            - name: LOADBALANCER_URL
+              value: "http://search-postgres.searchengine.svc.cluster.local:8080"

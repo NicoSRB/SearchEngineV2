@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: termnetapi
+  namespace: searchengine
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: termnetapi
+  template:
+    metadata:
+      labels:
+        app: termnetapi
+    spec:
+      containers:
+        - name: termnetapi
+          image: broloes2/search-termnet:latest
+          ports:
+            - containerPort: 80

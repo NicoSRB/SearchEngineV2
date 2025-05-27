@@ -1,0 +1,44 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: searchengine-ingress
+  namespace: searchengine
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+spec:
+  ingressClassName: nginx
+  rules:
+    - host: searchengine.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80
+
+          - path: /api/search
+            pathType: Prefix
+            backend:
+              service:
+                name: loadbalancer
+                port:
+                  number: 8080
+
+          - path: /termnet
+            pathType: Prefix
+            backend:
+              service:
+                name: termnetapi
+                port:
+                  number: 80
+
+          - path: /grafana
+            pathType: Prefix
+            backend:
+              service:
+                name: grafana
+                port:
+                  number: 3000

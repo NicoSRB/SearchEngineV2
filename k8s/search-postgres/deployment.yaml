@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: search-postgres
+  namespace: searchengine
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: search-postgres
+  template:
+    metadata:
+      labels:
+        app: search-postgres
+    spec:
+      containers:
+        - name: search-postgres
+          image: broloes2/searchengine-postgres:latest
+          ports:
+            - containerPort: 8080
+          env:
+            - name: RedisConnectionString
+              value: redis-master.searchengine.svc.cluster.local:6379
+            - name: RedisPassword
+              valueFrom:
+                secretKeyRef:
+                  name: redis-credentials
+                  key: password
+            - name: Redis__InstanceName
+              value: RedisCatching
+            - name: TERMNET_API
+              value: http://termnetapi.searchengine.svc.cluster.local

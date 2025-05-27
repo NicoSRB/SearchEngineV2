@@ -1,5 +1,4 @@
-﻿using SeachEngineAPI.Context;
-using SeachEngineAPI.DbContexts;
+﻿using SeachEngineAPI.DbContexts;
 using SeachEngineAPI.Interfaces;
 using Shared.Model;
 using Microsoft.EntityFrameworkCore;

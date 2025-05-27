@@ -1,0 +1,20 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: search-coordinator
+  namespace: searchengine
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: search-coordinator
+  template:
+    metadata:
+      labels:
+        app: search-coordinator
+    spec:
+      containers:
+        - name: search-coordinator
+          image: broloes2/search-coordinator:latest
+          ports:
+            - containerPort: 80

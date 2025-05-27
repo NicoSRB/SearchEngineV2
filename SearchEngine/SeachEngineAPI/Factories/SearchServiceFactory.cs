@@ -1,5 +1,4 @@
-﻿using SeachEngineAPI.Context;
-using SeachEngineAPI.Interfaces;
+﻿using SeachEngineAPI.Interfaces;
 using SeachEngineAPI.Services;
 
 namespace SeachEngineAPI.Factories

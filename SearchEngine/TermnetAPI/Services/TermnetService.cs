@@ -6,7 +6,7 @@ namespace TermnetAPI.Services
     public class TermnetService : ITermnetService
     {
 
-        
+        /// <summary> Gets synonyms on multi dimentional dictionary </summary>
         public Task<List<SynonymTermer>> GetSynonymsAsync(string word, List<string> domainNames)
         {
             var synonyms = new List<SynonymTermer>();

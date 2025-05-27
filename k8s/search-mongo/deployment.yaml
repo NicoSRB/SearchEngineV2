@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: search-mongo
+  namespace: searchengine
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: search-mongo
+  template:
+    metadata:
+      labels:
+        app: search-mongo
+    spec:
+      containers:
+        - name: search-mongo
+          image: broloes2/searchengine-mongo:latest
+          ports:
+            - containerPort: 80
+          env:
+            - name: REDIS_HOST
+              value: redis-master
+            - name: TERMNET_API
+              value: http://termnetapi.searchengine.svc.cluster.local
