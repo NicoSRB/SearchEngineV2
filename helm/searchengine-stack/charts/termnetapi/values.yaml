@@ -1,7 +1,0 @@
-image:
-  repository: broloes2/search-termnet
-  tag: latest
-  pullPolicy: IfNotPresent
-
-service:
-  port: 80
